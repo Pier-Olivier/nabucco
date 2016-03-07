@@ -47,16 +47,17 @@ class Morpheus extends Tank {
     
     // les transactions de SQL
     public function start_transaction(){
-        $this->_bdd->exec('START TRANSACTION');
+        $this->_bdd->beginTransaction();
     }
-    
+
     public function commit(){
-        $this->_bdd->exec('COMMIT');
+        $this->_bdd->commit();
     }
     
     public function rollback(){
-        $this->_bdd->exec('ROLLBACK');
+        $this->_bdd->rollBack();
     }
+
     //prépater la jointure avec d'autres tables
     public function add_jointure($champOrigine,$tableJointe,$champJoin='',$rangTable=0){
         // JOIN $tableJointe ON $champOrigine = $tableJointe.$champJoin
@@ -153,18 +154,20 @@ class Morpheus extends Tank {
                     else return new Trinity ($table, $donnees);
                 }
                 else{
-                    echo '!!! methodz select : id inexistant!!!';
+                    echo '!!! '.__CLASS__.'('.$this->_table.')::select : $id inexistant!!!';
                     return NULL;
                 }
             }
 			//else if ($id==0){return new Trinity (array());}
             else {
+                echo '!!! '.__CLASS__.'('.$this->_table.')::select : $id ne peut pas être négatif!!!';
+
                 echo '!!! methodz select : $id ne peut pas être négatif!!!';
                 return NULL;
             }
 	}
 	else{
-            echo '!!! methodz select : Il faut que la variable soit un entier positif!!!';
+            echo '!!! '.__CLASS__.'('.$this->_table.')::select : $id est un entier positif!!!';
             return NULL;
         }
     }
@@ -228,15 +231,27 @@ class Morpheus extends Tank {
 
         $q->execute();
 
-        if ($returnMax) return $this->maxId();
+        if ($returnMax){
+            if (empty($whereIdMax))
+                return $this->_bdd->lastInsertId();
+            else
+                return $this->maxId($whereIdMax);
+        }
+
     }
 
     //retourne le plus grand ID (utilisé par ->insertObjet)
-    public function maxId(){
-        $q = $this->_bdd->query('SELECT MAX('.$this->_listeNomChamps[0].') AS retourMax FROM '.$this->_table );
-        $donnees = $q->fetch();
-        return (int) $donnees['retourMax'];
+    public function maxId($where='', $indice=0){
+
+            $q = $this->_bdd->query('SELECT MAX('.$this->_listeNomChamps[$indice].') AS idMax FROM '.$this->_table.' '.$where);
+            $donnees = $q->fetch();
+            if ($indice)
+                return $donnees['idMax'];
+            else
+                return (int) $donnees['idMax'];
+
     }
+
     //retourne la plus grande valeur de la table (utilisé par ->insertObjet)
     public function selectMax($where='', $indice=0){
         $q = $this->_bdd->query('SELECT MAX('.$this->_listeNomChamps[$indice].') AS retourMax FROM '.$this->_table.' '.$where);
@@ -277,9 +292,17 @@ class Morpheus extends Tank {
             echo  'update (...$attributRang est un int >=0 ou un string';
             EXIT;
         }
+/* PROBLEME SUR UPDATE DANS RELATIOON ONE TO MANY
+ * 
+ */
+        //permet de vérifier si l'id existe et si valeur est au format
+//        $Objet = $this->select( (int) $id, $attribut2selection );
 
         //permet de vérifier si l'id existe et si valeur est au format
-        $Objet = $this->select( (int) $id, $attribut2selection );
+        if ($attributRang==0)
+            $Objet = $this->select( (int) $id, $attribut2selection );
+        else
+            $Objet = $this->select($id, $attribut2selection );
 
         $Objet->set($attributNom, $valeur);
 

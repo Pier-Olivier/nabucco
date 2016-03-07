@@ -2,7 +2,7 @@
 
 namespace nabucco;
 
-class Trinity extends Tank {
+class Trinity extends Tank  implements Iterator {
 
 /* seul les formats 
  * (unsigned) (small)(tiny)int, decimal, date, time, datetime, timestamp, text, varchar sont gérés
@@ -70,6 +70,67 @@ public function listeSizeAttributs(){
   return $this->_listeSizeAttributs;
 }
 
+///----------------------Iterator
+    public function valid(){
+        return array_key_exists(key($this->_listeAttributs), $this->_listeAttributs);
+    }
+
+    public function next(){
+        next($this->_listeAttributs);
+    }
+
+    public function rewind(){
+        reset($this->_listeAttributs);
+        return $this;
+    }
+
+    public function key(){
+        return key($this->_listeAttributs);
+    }
+
+    public function current(){
+        if ($this->valid())
+            return current($this->_listeAttributs);
+        else
+            return NULL;
+    }
+
+///-------------------SETTER et GETTER GENERIQUE
+public function __call($attribut, $liste_valeur) {
+       
+    if (array_key_exists ($attribut,$this->_listeAttributs)) {
+            
+        if (count ($liste_valeur) == 0) {
+            return $this->getAttribut($attribut);
+        }
+        else if (count ($liste_valeur) == 1) {
+            return $this->getAttribut($attribut, $liste_valeur[0]);
+        }
+        else {
+            throw new ErrorException ('<span class="alerte"> GETTER ('.$attribut.') de '.__CLASS__.'('.$this->_table.') ne comporte que 0 ou 1 attribut</span>');
+        }
+    }
+    else {
+        throw new ErrorException ('<span class="alerte">'.__CLASS__.'('.$this->_table.') ne comporte pas l\'attribut : '.$attribut.'</span>');
+    }
+
+}
+ 
+public function __get($key) {
+    throw new ErrorException ('<span class="alerte">On en peut acceder aux attributs : de '.__CLASS__.'('.$this->_table.') ainsi.</span>');
+}
+    
+public function __set($attribut, $valeur) {
+
+    if (array_key_exists ($attribut,$this->_listeAttributs))
+        $this->setAttribut($attribut, $valeur);
+        
+    else {
+        throw new ErrorException ('<span class="alerte">attribut : '.$attribut.' de '.__CLASS__.'('.$this->_table.') est invalide</span>');
+    }
+}
+///----------------------------------------
+
 public function set($attribut, $valeur){
 
     $formatExiste=TRUE;
@@ -80,52 +141,52 @@ public function set($attribut, $valeur){
     else if ($this->_listeFormatAttributs[$attribut]=='varchar') {
         if($valeur == NULL) $valeur ='';
         if (!is_string($valeur) ){
-            echo '<span class="alerte">!!!! pb avec format string de '.$attribut.' !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec format string de '.$attribut.' de '.__CLASS__.'('.$this->_table.') !!!!</span>';
             EXIT;
         }
         else if ( mb_strlen($valeur,'UTF-8') > $this->_listeSizeAttributs[$attribut] ){
-            echo '<span class="alerte">!!!! pb avec size ('.$this->_listeSizeAttributs[$attribut].') string de '.$attribut.' !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec size ('.$this->_listeSizeAttributs[$attribut].') string de '.$attribut.' de '.__CLASS__.'('.$this->_table.') !!!!</span>';
             EXIT;
         }
     }
     else if ($this->_listeFormatAttributs[$attribut]=='decimal' || $this->_listeFormatAttributs[$attribut]=='int' || $this->_listeFormatAttributs[$attribut]=='tinyint' || $this->_listeFormatAttributs[$attribut]=='smallint'){
         if($valeur == NULL) $valeur = 0;
         if (!is_numeric($valeur)){
-            echo '<span class="alerte">!!!! pb avec format numeric de '.$attribut.' !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec format numeric de '.$attribut.' de '.__CLASS__.'('.$this->_table.') !!!!</span>';
             EXIT;
         }
         else if ($this->_listeFormatAttributs[$attribut]=='tinyint' && ($valeur>127 || $valeur<-128)){
-            echo '<span class="alerte">!!!! pb avec valeur tinyint de '.$attribut.' : 127 < -128 !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec valeur tinyint de '.$attribut.' de '.__CLASS__.'('.$this->_table.') : 127 < -128 !!!!</span>';
             EXIT;
         }
         else if ($this->_listeFormatAttributs[$attribut]=='smallint' && ($valeur>32767 || $valeur<-32768)){
-            echo '<span class="alerte">!!!! pb avec valeur smallint de '.$attribut.' : 32767 < -32768 !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec valeur smallint de '.$attribut.' de '.__CLASS__.'('.$this->_table.') : 32767 < -32768 !!!!</span>';
             EXIT;
         }
     }
     else if ($this->_listeFormatAttributs[$attribut]=='decimal unsigned' || $this->_listeFormatAttributs[$attribut]=='int unsigned' || $this->_listeFormatAttributs[$attribut]=='tinyint unsigned' || $this->_listeFormatAttributs[$attribut]=='smallint unsigned'){
         if($valeur == NULL) $valeur = 0;
         if (!is_numeric($valeur)){
-            echo '<span class="alerte">!!!! pb avec format numeric de '.$attribut.' !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec format numeric de '.$attribut.' de '.__CLASS__.'('.$this->_table.') !!!!</span>';
             EXIT;
         }
         else if ($valeur<0){
-            echo '<span class="alerte">!!!! pb avec valeur de '.$attribut.' > 0 !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec valeur de '.$attribut.' de '.__CLASS__.'('.$this->_table.') > 0 !!!!</span>';
             EXIT;
         }
         else if ($this->_listeFormatAttributs[$attribut]=='tinyint unsigned' && $valeur>255){
-            echo '<span class="alerte">!!!! pb avec valeur tinyint unsigned de '.$attribut.' < 255 !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec valeur tinyint unsigned de '.$attribut.' de '.__CLASS__.'('.$this->_table.') < 255 !!!!</span>';
             EXIT;
         }
         else if ($this->_listeFormatAttributs[$attribut]=='smallint unsigned' && $valeur>65535){
-            echo '<span class="alerte">!!!! pb avec valeur smallint de '.$attribut.' < 65535!!!!</span>';
+            echo '<span class="alerte">!!!! pb avec valeur smallint de '.$attribut.' de '.__CLASS__.'('.$this->_table.') < 65535!!!!</span>';
             EXIT;
         }
     }
     else if ($this->_listeFormatAttributs[$attribut]=='time'){
         if($valeur == NULL) $valeur = '00:00:00';
         if (!$this->verifier_format_time($valeur)){
-            echo '<span class="alerte">!!!! pb avec format time de '.$attribut.' = 00:00:00 !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec format time de '.$attribut.' de '.__CLASS__.'('.$this->_table.') = 00:00:00 !!!!</span>';
             EXIT;
         }
     }
@@ -139,7 +200,7 @@ public function set($attribut, $valeur){
             $valeur_heure = $valeur[1];
 
             if(! ($this->verifier_format_date($valeur_date) && $this->verifier_format_time($valeur_heure)) ) {
-                echo '<span class="alerte">!!!! pb avec format timestamp de '.$attribut.' = 0000-00-00 00:00:00 !!!!</span>';
+                echo '<span class="alerte">!!!! pb avec format timestamp de '.$attribut.' de '.__CLASS__.'('.$this->_table.') = 0000-00-00 00:00:00 !!!!</span>';
                 EXIT;
             }
         }
@@ -148,7 +209,7 @@ public function set($attribut, $valeur){
         if($valeur == NULL) $valeur ='0000-00-00';
         
         if (!$this->verifier_format_date($valeur)){
-            echo '<span class="alerte">!!!! pb avec format date de '.$attribut.' = 0000-00-00 !!!!</span>';
+            echo '<span class="alerte">!!!! pb avec format date de '.$attribut.' de '.__CLASS__.'('.$this->_table.') = 0000-00-00 !!!!</span>';
             EXIT;
         }
         
@@ -161,7 +222,7 @@ public function set($attribut, $valeur){
             $valeur_heure = $valeur_copie[1];
 
             if(! ($this->verifier_format_date($valeur_date) && $this->verifier_format_time($valeur_heure)) ) {
-                echo '<span class="alerte">!!!! pb avec format datetime de '.$attribut.' = 0000-00-00 00:00:00 !!!!</span>';
+                echo '<span class="alerte">!!!! pb avec format datetime de '.$attribut.' de '.__CLASS__.'('.$this->_table.') = 0000-00-00 00:00:00 !!!!</span>';
                 EXIT;
             }
         }
@@ -177,7 +238,7 @@ public function set($attribut, $valeur){
         return TRUE;
     }
     else{
-        echo '<span class="alerte">!!!! le format de '.$attribut.' non defini dans set_attribut !!!!</span>';
+        echo '<span class="alerte">!!!! le format de '.$attribut.' de '.__CLASS__.'('.$this->_table.') non defini dans set_attribut !!!!</span>';
         EXIT;
     }
 
