@@ -333,13 +333,18 @@ class Morpheus extends Tank {
     }
 
 //compter les objets en fonction de critère avec possibilité de joindre une table
-	public function countEntree($where='',$join='',$order_by=''){
-		$total = 0;
-		if ($order_by!='') $order_by = 'ORDER BY '.$order_by;
-	
-		$q = $this->_bdd->query("SELECT COUNT(*) AS total FROM ".$this->_table." ".$join." ".$where." ".$order_by );
+	public function countEntree($where='',$join=''){
+		$q = $this->_bdd->query("SELECT COUNT(*) AS total FROM ".$this->_table." ".$join." ".$where);
 		$donnees = $q->fetch();
 		return $donnees['total'];
+	}
+
+//fait la somme des quantity  d'objets en fonction de critère avec possibilité de joindre une table
+	public function sumEntree($champ, $where='',$join=''){
+
+		$q = $this->_bdd->query("SELECT SUM(".$champ.") AS somme FROM ".$this->_table." ".$join." ".$where." ");
+		$donnees = $q->fetch();
+		return $donnees['somme'];
 	}
 
 //convertir automatiquement les POST qui ont été converti par add_champConverted
